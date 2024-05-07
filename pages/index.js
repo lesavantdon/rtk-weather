@@ -1,8 +1,8 @@
 import React from 'react';
 import { useDispatch } from 'react-redux'; // Import the useDispatch hook
-import styles from './page.module.css';
-import SearchForm from './components/SearchForm';
-import { fetchWeatherData } from './actions/weatherActions'; // Import the action creator
+import styles from '@/page.module.css';
+import SearchForm from '../../components/SearchForm';
+import { fetchWeatherData } from '../../actions/weatherActions'; // Import the action creator
 
 export default function Home() {
   const dispatch = useDispatch(); // Initialize useDispatch hook

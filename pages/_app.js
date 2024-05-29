@@ -4,7 +4,7 @@ import store from '../store/configureStore';
 import WeatherComponent from '../components/weatherComponent';
 import SearchForm from '../components/searchForm';
 
-const Index = () => {
+function App() {
   return (
     <Provider store={store}>
       <div className="App">
@@ -13,7 +13,6 @@ const Index = () => {
       </div>
     </Provider>
   );
-};
+}
 
-export default Index;
-
+export default App;

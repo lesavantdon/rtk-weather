@@ -1,7 +1,6 @@
-// components/SearchForm.js
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { fetchWeather } from '../actions/weatherActions';
+import { fetchWeather } from '../reducers/weatherReducer';
 
 const SearchForm = () => {
   const [city, setCity] = useState('');
@@ -9,8 +8,10 @@ const SearchForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(fetchWeather(city));
-    setCity('');
+    if (city.trim() !== '') {
+      dispatch(fetchWeather(city.trim()));
+      setCity(''); // Clear input after dispatch
+    }
   };
 
   return (

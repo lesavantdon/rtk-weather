@@ -1,36 +1,100 @@
-// WeatherComponent.js
-import React, { useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchWeatherData } from './actions/weatherActions';
-import WeatherSparkline from './weatherSparkline';
+import React from 'react';
+import { useSelector } from 'react-redux';
+import { Sparklines, SparklinesLine, SparklinesReferenceLine } from 'react-sparklines';
+
+// Convert Kelvin to Fahrenheit
+const kelvinToFahrenheit = (kelvin) => {
+  return ((kelvin - 273.15) * 9 / 5) + 32;
+};
+
+// Calculate mean of an array of numbers
+const calculateMean = (data) => {
+  if (data.length === 0) return 0;
+  const sum = data.reduce((a, b) => a + b, 0);
+  return sum / data.length;
+};
 
 const WeatherComponent = () => {
-  const dispatch = useDispatch();
-  const weatherData = useSelector(state => state.weather.weatherData);
-  const humidityData = useSelector(state => state.weather.humidityData);
-  const pressureData = useSelector(state => state.weather.pressureData);
-  const loading = useSelector(state => state.weather.loading);
-  const error = useSelector(state => state.weather.error);
+  const { entries, loading, error } = useSelector(state => state.weather);
 
-  useEffect(() => {
-    dispatch(fetchWeatherData('weather')); // Fetch weather data
-    dispatch(fetchWeatherData('humidity')); // Fetch humidity data
-    dispatch(fetchWeatherData('pressure')); // Fetch pressure data
-  }, [dispatch]);
-
-  if (loading) return <div>Loading forecasts...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  // Group entries by city
+  const groupedEntries = entries.reduce((acc, entry) => {
+    if (!acc[entry.city]) {
+      acc[entry.city] = [];
+    }
+    acc[entry.city].push(entry);
+    return acc;
+  }, {});
 
   return (
     <div>
-      <h2>Weather Forecast</h2>
-      <WeatherSparkline weatherData= {weatherData}/>
+      <hr />
+      {loading && <p>Loading...</p>}
+      {error && <p>Error: {error.message}</p>}
       
-      <h2>Humidity Forecast</h2>
-      <WeatherSparkline humidityData = {humidityData}/>
-      
-      <h2>Pressure Forecast</h2>
-      <WeatherSparkline pressureData = {pressureData}/>
+      <table>
+        <thead>
+          <tr>
+            <th>City</th>
+            <th>Temperature (°F)</th>
+            <th>Pressure (hPa)</th>
+            <th>Humidity (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.keys(groupedEntries).map(city => {
+            const cityEntries = groupedEntries[city];
+            const temperatureData = cityEntries.map(entry => kelvinToFahrenheit(entry.main.temp));
+            const pressureData = cityEntries.map(entry => entry.main.pressure);
+            const humidityData = cityEntries.map(entry => entry.main.humidity);
+
+            const meanTemperature = calculateMean(temperatureData).toFixed(2);
+            const meanPressure = calculateMean(pressureData).toFixed(2);
+            const meanHumidity = calculateMean(humidityData).toFixed(2);
+
+            return (
+              <React.Fragment key={city}>
+                {cityEntries.map((entry, index) => (
+                  <tr key={entry.id}>
+                    {index === 0 && (
+                      <td rowSpan={cityEntries.length + 2}>{city}</td>
+                    )}
+                    <td>{kelvinToFahrenheit(entry.main.temp).toFixed(2).hide}</td>
+                    <td>{entry.main.pressure.hide}</td>
+                    <td>{entry.main.humidity.hide}</td>
+                  </tr>
+                ))}
+                <tr key={`${city}-chart`}>
+                  <td>
+                    <Sparklines data={temperatureData}>
+                      <SparklinesLine color="blue" />
+                      <SparklinesReferenceLine type="mean" />
+                    </Sparklines>
+                  </td>
+                  <td>
+                    <Sparklines data={pressureData}>
+                      <SparklinesLine color="green" />
+                      <SparklinesReferenceLine type="mean" />
+                    </Sparklines>
+                  </td>
+                  <td>
+                    <Sparklines data={humidityData}>
+                      <SparklinesLine color="red" />
+                      <SparklinesReferenceLine type="mean" />
+                    </Sparklines>
+                  </td>
+                </tr>
+                <tr key={`${city}-mean`}>
+                  <td>{meanTemperature}</td>
+                  <td>{meanPressure}</td>
+                  <td>{meanHumidity}</td>
+                </tr>
+              </React.Fragment>
+            );
+          })}
+        </tbody>
+      </table>
+      <hr />
     </div>
   );
 };
